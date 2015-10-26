@@ -47,7 +47,10 @@ Return a list with the following components:
 \item{hessian}{Hessian of the objective function at the optimal point.}
 }
 \description{
-Optimization for nonlinear objective and constraint functions.
+Sequential Quatratic
+Programming (SQP) method is implemented to find solution for general nonlinear optimization problem
+(with nonlinear objective and constraint functions). The SQP method can be find in detail in Chapter 18 of
+Jorge Nocedal and Stephen J. Wright's book.
 Linear or nonlinear equality and inequality constraints are allowed.
 It accepts the input parameters as a constrained matrix.
 The function \code{NlcOptim} is to solve generalized nonlinear optimization problem:
@@ -130,5 +133,8 @@ NlcOptim(x0,objfun=objfun,confun=confun)
 }
 \author{
 Xianyan Chen, Xiangrong Yin
+}
+\references{
+Nocedal, Jorge, and Stephen Wright. Numerical optimization. Springer Science & Business Media, 2006.
 }
 
