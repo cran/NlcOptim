@@ -110,9 +110,12 @@
 #' @importFrom MASS ginv 
 #' @importFrom stats rnorm
 #'
-NlcOptim=function(X,objfun,confun,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
+NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
                   ub=NULL,tolX = 1.0000e-05,tolFun = 1.0000e-06,
                   tolCon = 1.0000e-06,maxnFun = 10000000,maxIter = 4000){
+  if (is.null(X)) stop('please input initial value')
+  if (is.null(objfun)) stop('please write objective function')
+  if (is.null(confun)) stop('please write constraint function')
   X=as.matrix(X)
   Xtarget = as.vector(X)
   dims=NULL
@@ -135,23 +138,23 @@ NlcOptim=function(X,objfun,confun,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
   lenghlb = length(lb);
   lenghub = length(ub);
   if (lenghlb > dims$nvar){
-    print('invalid bounds')
+    warning('invalid bounds')
     lb = lb(1:dims$nvar);
     lenghlb = dims$nvar;
   }else if (lenghlb <  dims$nvar) {
     if (lenghlb > 0){
-      print('invalid bounds')
+      warning('invalid bounds')
     }
     lb = rbind(lb, matrix(rep(-Inf, dims$nvar-lenghlb),ncol=1))
     lenghlb = dims$nvar;
   }
   if (lenghub > dims$nvar){
-    print('invalid bounds')
+    warning('invalid bounds')
     ub = ub(1:dims$nvar);
     lenghub = dims$nvar;
   }else if (lenghub <  dims$nvar) {
     if (lenghub > 0){
-      print('invalid bounds')
+      warning('invalid bounds')
     }
     ub = rbind(ub, matrix(rep(Inf, dims$nvar-lenghub),ncol=1))
     lenghub = dims$nvar;
@@ -159,7 +162,7 @@ NlcOptim=function(X,objfun,confun,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
   
   len = min(lenghlb,lenghub)
   if (sum( lb > ub )>0){
-    return('please check bounds')
+    stop('please check bounds')
   }   
   
   start=NULL
@@ -220,7 +223,7 @@ NlcOptim=function(X,objfun,confun,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
   
   nctmp = ncineq
   nc = rbind(as.matrix(nceq), as.matrix(ncineq))
-  c = rbind(rbind(rbind( Aeq*Xtarget-Beq, as.matrix(nceq)), as.matrix(A%*%Xtarget)-as.matrix(B)), as.matrix(ncineq))
+  c = rbind(rbind(rbind( Aeq%*%Xtarget-Beq, as.matrix(nceq)), as.matrix(A%*%Xtarget)-as.matrix(B)), as.matrix(ncineq))
   
   nonlin_eq = length(nceq); nonlin_Ineq = length(ncineq);nLineareq = nrow(Aeq);
   nLinearIneq = nrow(A);eq = nonlin_eq + nLineareq; ineq = nonlin_Ineq + nLinearIneq;

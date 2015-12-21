@@ -4,9 +4,9 @@
 \alias{NlcOptim}
 \title{Solve Optimization problem with Nonlinear Objective and Constraints}
 \usage{
-NlcOptim(X, objfun, confun, A = NULL, B = NULL, Aeq = NULL, Beq = NULL,
-  lb = NULL, ub = NULL, tolX = 1e-05, tolFun = 1e-06, tolCon = 1e-06,
-  maxnFun = 1e+07, maxIter = 4000)
+NlcOptim(X = NULL, objfun = NULL, confun = NULL, A = NULL, B = NULL,
+  Aeq = NULL, Beq = NULL, lb = NULL, ub = NULL, tolX = 1e-05,
+  tolFun = 1e-06, tolCon = 1e-06, maxnFun = 1e+07, maxIter = 4000)
 }
 \arguments{
 \item{X}{Starting vector of parameter values.}
