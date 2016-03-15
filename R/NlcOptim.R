@@ -138,23 +138,23 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   lenghlb = length(lb);
   lenghub = length(ub);
   if (lenghlb > dims$nvar){
-    warning('invalid bounds')
+    print('invalid bounds')
     lb = lb(1:dims$nvar);
     lenghlb = dims$nvar;
   }else if (lenghlb <  dims$nvar) {
     if (lenghlb > 0){
-      warning('invalid bounds')
+      print('invalid bounds')
     }
     lb = rbind(lb, matrix(rep(-Inf, dims$nvar-lenghlb),ncol=1))
     lenghlb = dims$nvar;
   }
   if (lenghub > dims$nvar){
-    warning('invalid bounds')
+    print('invalid bounds')
     ub = ub(1:dims$nvar);
     lenghub = dims$nvar;
   }else if (lenghub <  dims$nvar) {
     if (lenghub > 0){
-      warning('invalid bounds')
+      print('invalid bounds')
     }
     ub = rbind(ub, matrix(rep(Inf, dims$nvar-lenghub),ncol=1))
     lenghub = dims$nvar;
@@ -162,7 +162,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   
   len = min(lenghlb,lenghub)
   if (sum( lb > ub )>0){
-    stop('please check bounds')
+    return('please check bounds')
   }   
   
   start=NULL
@@ -203,8 +203,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   boundM = diag(max(lenghub,lenghlb));
   if (sum(lbflag)> 0 ){ 
     lbM = -boundM[lbflag,1:numVar];
-    lbright = -lb[lbflag,,drop=F]} else {lbM = NULL; lbright = NULL;}
-  
+    lbright = -as.matrix(lb)[lbflag,,drop=F]} else {lbM = NULL; lbright = NULL;}
   
   if (sum(ubflag)> 0){
     ubM = boundM[ubflag,1:numVar];
@@ -279,9 +278,13 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
     tgc = t(gc)
     
     if(eq>0){
-      iopp = tgc%*%ggf>0
-      tgc[iopp,] = -tgc[iopp,]
-      c[iopp] = -c[iopp]
+      for (i in 1:eq){
+        iopp = tgc[i,]%*%ggf   
+        if (iopp>0){
+          tgc[i,] = -tgc[i,]              
+          c[i] = -c[i]  
+        }                  
+      }
     }
     
     if (iter > 0){
@@ -354,7 +357,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
       xint = matrix(0,numVar,1)
       HESS = (HESS + t(HESS))*0.5; 
       
-      resqp=solqp(HESS,ggf,tgc,-c,xint,eq,nrow(tgc),numVar)
+      resqp=solqp(HESS,ggf,tgc,-c,xint,eq,nrow(tgc),numVar)   
       DIR=resqp$X
       lambda=resqp$lambda
       iact=resqp$indxact
@@ -540,3 +543,4 @@ boundflag=function(x,lb,ub, delta,i){
   }  
   return(delta)
 }
+

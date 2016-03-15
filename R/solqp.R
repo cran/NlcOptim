@@ -1,3 +1,4 @@
+
 solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
   f=as.matrix(f)
   B=as.matrix(B)
@@ -20,7 +21,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
   A=A/matrix(rep(Astan,ncol(A)),ncol=ncol(A))
   tolerr = 0.01*sqrt(.Machine$double.eps)
   tolf = 100*numVar*.Machine$double.eps
-
+  
   orignctl = nctl;
   lambda = matrix(0,orignctl,1)
   if(neqtl>0){
@@ -28,7 +29,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
   }else{
     indxact=ieq = NULL
   }
-
+  
   xieq = matrix(0,nctl,1)
   xieq[indxact] = 1
   iact = length(indxact)
@@ -47,7 +48,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
     }
     if (length(idxdep)>0){
       flag = 1
-      bidxdep =  abs(Qa[,idxdep]%*%B[ieq]) >= tolf ;
+      bidxdep =  abs(t(Qa[,idxdep])%*%B[ieq]) >= tolf ;
       if (any( bidxdep )){  
         flag = -2;
       } else {
@@ -146,7 +147,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
           flag = -2
         }     
       }
-
+      
       if(qpflag){
         lambdact = -ginv(R)%*%(t(Q)%*%(H%*%X+f))
       } else{
@@ -169,7 +170,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
       Z = Q[,(iact+1):numVar,drop=F]
     }   
   }
- 
+  
   const = A%*%X-B;
   constdf = 0
   tolconnorm = .Machine$double.eps
@@ -252,7 +253,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
     }
   }
   
- 
+  
   ind_old = 0
   while (iter < imax){
     iter = iter + 1
@@ -316,7 +317,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
             return(list(X=X,lambda=lambda,iter=iter,indxact=indxact))
             
           } else {
-            Dir = Z*Dirproj
+            Dir = Z%*%Dirproj   
             if(t(ggf)%*%Dir > 0){
               Dir = -Dir
             }
@@ -345,7 +346,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
     if(qpflag){
       ggf=H%*%X+f
     }
-   
+    
     const = A%*%X-B;
     const[ieq] = abs(const[ieq,,drop=F]);
     if(neqtl<nctl){
@@ -364,7 +365,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
           return(list(X=X,lambda=lambda,iter=iter,indxact=indxact))
           
         }
-       
+        
         minindact = which(indxact == min(indxact[indlam]))[1]
         if(!is.na(minindact)){
           Act=Act[-minindact,,drop=F] 
