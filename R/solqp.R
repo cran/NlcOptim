@@ -1,4 +1,3 @@
-
 solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
   f=as.matrix(f)
   B=as.matrix(B)
@@ -201,7 +200,7 @@ solqp=function(H=NULL,f,A,B,X,neqtl,nctl,numVar){
       } else{
         flag=-4
       }
-      lambda[indall,,drop=F] = (lambdaS[(1:nctl),,drop=F]/Astan);
+      lambda[indall,] <- lambdaS[(1:nctl),]/Astan; 
       if(neqtl){
         indxact = 1:neqtl
       }else{indxact=NULL}
@@ -675,9 +674,3 @@ qrin=function(Q,R,j,x){
   }
   return(list(Q=Q,R=R)) 
 }
-
-
-
-
-
-

@@ -6,7 +6,7 @@
 #'Jorge Nocedal and Stephen J. Wright's book.
 #' Linear or nonlinear equality and inequality constraints are allowed.  
 #' It accepts the input parameters as a constrained matrix.
-#' The function \code{NlcOptim} is to solve generalized nonlinear optimization problem:
+#' The function \code{solnl} is to solve generalized nonlinear optimization problem:
 #' \deqn{min f(x)}
 #' \deqn{s.t. ceq(x)=0}
 #' \deqn{c(x)\le 0}
@@ -30,8 +30,9 @@
 #' @param maxnFun Maximum updates in the objective function.
 #' @param maxIter Maximum iteration.
 #' @return Return a list with the following components:  
-#'\item{p}{The optimum solution.}
-#'\item{fval}{The value of the objective function at the optimal point.}
+#'\item{par}{The optimum solution.}
+#'\item{fn}{The value of the objective function at the optimal point.}
+#'\item{counts}{Number of function evaluations, and number of gradient evaluations.}
 #'\item{lambda}{Lagrangian multiplier.}
 #'\item{grad}{The gradient of the objective function at the optimal point.}
 #'\item{hessian}{Hessian of the objective function at the optimal point.}
@@ -53,7 +54,7 @@
   #'}
 #'
 #'x0=c(-2,2,2,-1,-1)
-#'NlcOptim(x0,objfun=objfun,confun=confun)
+#'solnl(x0,objfun=objfun,confun=confun)
 #'
 #'####ex2
 #'obj=function(x){
@@ -69,7 +70,7 @@
   #'}
 #'
 #'x0=c(1,1,1,1,1)
-#'NlcOptim(x0,objfun=obj,confun=con)
+#'solnl(x0,objfun=obj,confun=con)
 #'
 #'
 #'##########ex3
@@ -84,9 +85,9 @@
   #'}
 #'
 #'x0=as.matrix(c(-1.9,2))
-#'objfun(x0)
-#'confun(x0)
-#'NlcOptim(x0,objfun=obj,confun=con)
+#'obj(x0)
+#'con(x0)
+#'solnl(x0,objfun=obj,confun=con)
 #'
 #'
 #'##########ex4
@@ -105,17 +106,106 @@
 #'}
 #'
 #'x0=as.matrix(c(3,1))
-#'NlcOptim(x0,objfun=objfun,confun=confun)
+#'solnl(x0,objfun=objfun,confun=confun)
+#'
+#'
+#'##############ex5
+#'rosbkext.f <- function(x){
+#'    n <- length(x)
+#'    sum (100*(x[1:(n-1)]^2 - x[2:n])^2 + (x[1:(n-1)] - 1)^2)
+#'}
+#'n <- 2
+#'set.seed(54321)
+#'p0 <- rnorm(n)
+#'Aeq <- matrix(rep(1, n), nrow=1)
+#'Beq <- 1
+#'lb <- c(rep(-Inf, n-1), 0)
+#'solnl(X=p0,objfun=rosbkext.f, lb=lb, Aeq=Aeq, Beq=Beq)
+#'ub <- rep(1, n)
+#'solnl(X=p0,objfun=rosbkext.f, lb=lb, ub=ub, Aeq=Aeq, Beq=Beq)
+#'
+#'
+#'##############ex6
+#'nh <- vector("numeric", length = 5)
+#'
+#'Nh <- c(6221,11738,4333,22809,5467)
+#'ch <- c(120, 80, 80, 90, 150)
+#'
+#'mh.rev <- c(85, 11, 23, 17, 126)
+#'Sh.rev <- c(170.0, 8.8, 23.0, 25.5, 315.0)
+#'
+#'mh.emp <- c(511, 21, 70, 32, 157)
+#'Sh.emp <- c(255.50, 5.25, 35.00, 32.00, 471.00)
+#'
+#'ph.rsch <- c(0.8, 0.2, 0.5, 0.3, 0.9)
+#'
+#'ph.offsh <- c(0.06, 0.03, 0.03, 0.21, 0.77)
+#'
+#'budget = 300000
+#'n.min <- 100
+# Relvar function used in objective
+#'relvar.rev <- function(nh){
+  #'  rv <- sum(Nh * (Nh/nh - 1)*Sh.rev^2)
+  #'  tot <- sum(Nh * mh.rev)
+  #'  rv/tot^2
+  #'}
+#'
+#'relvar.emp <- function(nh){
+  #'  rv <- sum(Nh * (Nh/nh - 1)*Sh.emp^2)
+  #'  tot <- sum(Nh * mh.emp)
+  #'  rv/tot^2
+  #'}
+#'
+#'relvar.rsch <- function(nh){
+  #'  rv <- sum( Nh * (Nh/nh - 1)*ph.rsch*(1-ph.rsch)*Nh/(Nh-1) )
+  #'  tot <- sum(Nh * ph.rsch)
+  #'  rv/tot^2
+  #'}
+#'
+#'relvar.offsh <- function(nh){
+  #'  rv <- sum( Nh * (Nh/nh - 1)*ph.offsh*(1-ph.offsh)*Nh/(Nh-1) )
+  #'  tot <- sum(Nh * ph.offsh)
+  #'  rv/tot^2
+  #'}
+#'
+#'nlc.constraints <- function(nh){
+  #'  h <- rep(NA, 13)
+  #'  h[1:length(nh)] <- (Nh + 0.01) - nh
+  #'  h[(length(nh)+1) : (2*length(nh)) ] <- (nh + 0.01) - n.min
+  #'  h[2*length(nh) + 1] <- 0.05^2 - relvar.emp(nh)
+  #'  h[2*length(nh) + 2] <- 0.03^2 - relvar.rsch(nh)
+  #'  h[2*length(nh) + 3] <- 0.03^2 - relvar.offsh(nh)
+  #'  return(list(ceq=NULL, c=-h))
+  #'}
+#'
+#'nlc <- function(nh){
+  #'  h <- rep(NA, 3)
+  #'  h[ 1] <- 0.05^2 - relvar.emp(nh)
+  #'  h[ 2] <- 0.03^2 - relvar.rsch(nh)
+  #'  h[3] <- 0.03^2 - relvar.offsh(nh)
+  #'  return(list(ceq=NULL, c=-h))
+#'}
+#'
+#'Aeq <- matrix(ch/budget, nrow=1)
+#'Beq <- 1
+#'
+#'A=rbind(diag(-1,5,5),diag(1,5,5))
+#'B=c(-Nh-0.01,rep(n.min-0.01,5))
+#'
+#'solnl(X=rep(100,5),objfun=relvar.rev,confun=nlc.constraints, Aeq=Aeq, Beq=Beq)
+#'
+#'solnl(X=rep(100,5),objfun=relvar.rev,confun=nlc, Aeq=Aeq, Beq=Beq, A=-A, B=-B)
+#'
 #' @export
 #' @importFrom MASS ginv 
 #' @importFrom stats rnorm
+#' @importFrom quadprog solve.QP
 #'
-NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
+solnl=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb=NULL,
                   ub=NULL,tolX = 1.0000e-05,tolFun = 1.0000e-06,
                   tolCon = 1.0000e-06,maxnFun = 10000000,maxIter = 4000){
   if (is.null(X)) stop('please input initial value')
   if (is.null(objfun)) stop('please write objective function')
-  if (is.null(confun)) stop('please write constraint function')
   X=as.matrix(X)
   Xtarget = as.vector(X)
   dims=NULL
@@ -169,17 +259,19 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   start$xform = X;
   medx = matrix(rep(1,dims$nvar),ncol=1);  
   Xtarget[Xtarget<lb]=lb[Xtarget<lb]
-  Xtarget[Xtarget>ub]=ub[Xtarget>lb]
+  Xtarget[Xtarget>ub]=ub[Xtarget>ub]
   X = matrix(Xtarget,dim(start$xform))
   start$g = matrix(0,dims$nvar,1)
   start$f = objfun(X)
-  conf=confun(X)
-  ctmp=conf$c
-  ceqtmp=conf$ceq 
-  start$ncineq = as.vector(ctmp)
-  start$nceq = as.vector(ceqtmp)
-  start$gnc = matrix(0,dims$nvar,length(start$ncineq));
-  start$gnceq = matrix(0,dims$nvar,length(start$nceq));
+  if (!is.null(confun)){    
+    conf=confun(X)
+    ctmp=conf$c
+    ceqtmp=conf$ceq 
+    start$ncineq = as.vector(ctmp)
+    start$nceq = as.vector(ceqtmp)
+    start$gnc = matrix(0,dims$nvar,length(start$ncineq));
+    start$gnceq = matrix(0,dims$nvar,length(start$nceq));
+  } else {conf = ctmp = ceqtmp = start$ncineq = start$nceq = start$gnc = start$gnceq = NULL}
   
   if (is.null(start$ncineq))  start$ncineq = matrix(0,0,1)    
   if (is.null(start$nceq)) start$nceq = matrix(0,0,1) 
@@ -207,7 +299,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   
   if (sum(ubflag)> 0){
     ubM = boundM[ubflag,1:numVar];
-    ubright=ub[ubflag,,drop=F];
+    ubright=as.matrix(ub)[ubflag,,drop=F];
   } else {ubM = NULL; ubright=NULL;}
   
   A = rbind(rbind(lbM,ubM),A)
@@ -222,7 +314,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   
   nctmp = ncineq
   nc = rbind(as.matrix(nceq), as.matrix(ncineq))
-  c = rbind(rbind(rbind( Aeq%*%Xtarget-Beq, as.matrix(nceq)), as.matrix(A%*%Xtarget)-as.matrix(B)), as.matrix(ncineq))
+  c = rbind(rbind(rbind( Aeq%*%Xtarget-Beq, as.matrix(nceq)), as.matrix(A%*%Xtarget)-matrix(B,ncol=1)), as.matrix(ncineq))
   
   nonlin_eq = length(nceq); nonlin_Ineq = length(ncineq);nLineareq = nrow(Aeq);
   nLinearIneq = nrow(A);eq = nonlin_eq + nLineareq; ineq = nonlin_Ineq + nLinearIneq;
@@ -357,10 +449,10 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
       xint = matrix(0,numVar,1)
       HESS = (HESS + t(HESS))*0.5; 
       
-      resqp=solqp(HESS,ggf,tgc,-c,xint,eq,nrow(tgc),numVar)   
-      DIR=resqp$X
-      lambda=resqp$lambda
-      iact=resqp$indxact
+      resqp=solve.QP(HESS,-ggf,-t(tgc),c,meq=eq)   
+      DIR=resqp$solution
+      lambda=resqp$Lagrangian
+      iact=resqp$iact
       
       lambda_nc[,1] = 0;
       lambda_nc[iact,] = lambda[iact];
@@ -379,7 +471,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
       LAMBDA = lambda[(1:nctl)];
       LAMBDA_old = apply(cbind(LAMBDA,0.5*(LAMBDA+LAMBDA_old)),1,max)  
       
-      ggfDIR = t(ggf)%*%DIR;
+      ggfDIR = t(ggf)%*%DIR;  
       
       xtrial = Xtarget;
       commerit = f + sum(LAMBDA_old*(ga>0)*ga) + 1e-30;   
@@ -412,16 +504,20 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
         X= matrix(Xtarget,dim(start$xform))
         
         f = objfun(X)
-        conf = confun(X)
-        nctmp=conf$c
-        nceqtmp=conf$ceq
-        nctmp=as.vector(nctmp)
-        nceqtmp=as.vector(nceqtmp)    
         
-        nfval = nfval + 1;
+        if (!is.null(confun)){    
+          conf = confun(X)
+          nctmp=conf$c
+          nceqtmp=conf$ceq
+        } else {conf = nctmp = nceqtmp = NULL}
+        nctmp=as.vector(nctmp)
+        nceqtmp=as.vector(nceqtmp)  
+        
+        
+        nfval = nfval + 1; 
         
         nc = c(nceqtmp, nctmp)
-        c = matrix(c(Aeq%*%Xtarget-Beq,nceqtmp, A%*%Xtarget-B,nctmp),ncol=1)
+        c = matrix(c(Aeq%*%Xtarget-Beq,nceqtmp, A%*%Xtarget-matrix(B,ncol=1),nctmp),ncol=1)
         
         if (eq>0 & ineq>0) {
           ga = rbind(abs(c[1:eq,,drop=F]),c[(eq+1):nctl,,drop=F]);  
@@ -495,7 +591,7 @@ NlcOptim=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL
   if(nonlin_Ineq>0){
     lambda_out$ineqnonlin = lambda_nc[(ii+1 ):length(lambda_nc)];
   }  
-  return(list(p=X,fval=fval, lambda=lambda_out,grad=GRADIENT, hessian=HESS ))
+  return(list(par=X,fn=fval, counts=cbind(nfval,ngval),lambda=lambda_out,grad=GRADIENT, hessian=HESS ))
 }
 
 
