@@ -302,8 +302,8 @@ solnl=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb
     ubright=as.matrix(ub)[ubflag,,drop=F];
   } else {ubM = NULL; ubright=NULL;}
   
-  A = rbind(rbind(lbM,ubM),A)
-  B = rbind(rbind(lbright,ubright),B)
+  A = rbind(lbM,ubM,A)
+  B = as.vector(c(lbright,ubright,B))
   if (length(A)==0) {A = matrix(0,0,numVar); B=matrix(0,0,1);}    
   if (length(Aeq)==0){Aeq = matrix(0,0,numVar); Beq=matrix(0,0,1);}
   
@@ -449,10 +449,16 @@ solnl=function(X=NULL,objfun=NULL,confun=NULL,A=NULL,B=NULL,Aeq=NULL,Beq=NULL,lb
       xint = matrix(0,numVar,1)
       HESS = (HESS + t(HESS))*0.5; 
       
-      resqp=solve.QP(HESS,-ggf,-t(tgc),c,meq=eq)   
-      DIR=resqp$solution
-      lambda=resqp$Lagrangian
-      iact=resqp$iact
+      tryCatch({
+        resqp=solve.QP(HESS,-ggf,-t(tgc),c,meq=eq)   
+        DIR=resqp$solution
+        lambda=resqp$Lagrangian
+        iact=resqp$iact
+      }, error=function(e){      
+        resqp=solqp(HESS,ggf,tgc,-c,xint,eq,nrow(tgc),numVar)   #######
+        DIR=resqp$X
+        lambda=resqp$lambda
+        iact=resqp$indxact})
       
       lambda_nc[,1] = 0;
       lambda_nc[iact,] = lambda[iact];
